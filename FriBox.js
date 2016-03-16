@@ -85,7 +85,7 @@ function posredujSeznamDatotek(odgovor) {
     odgovor.writeHead(200, {'Content-Type': 'application/json'});
     fs.readdir(dataDir, function(napaka, datoteke) {
         if (napaka) {
-            posredujNapako404(odgovor);
+            posredujNapako500(odgovor);
         } else {
             var rezultat = [];
             for (var i=0; i<datoteke.length; i++) {
