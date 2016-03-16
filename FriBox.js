@@ -49,6 +49,12 @@ function posredujNapako500(odgovor) {
     odgovor.end();
 }
 
+function posredujNapako409(odgovor) {
+    odgovor.writeHead(409, {'Content-Type': 'text/plain'});
+    odgovor.write('Napaka 409: Konfliktna datoteka');
+    odgovor.end();
+}
+
 function posredujUspesnoZbrisana(odgovor) {
     odgovor.writeHead(200, {'Content-Type': 'text/plain'});
     odgovor.write('Datoteka izbrisana');
@@ -110,12 +116,32 @@ function naloziDatoteko(zahteva, odgovor) {
     form.on('end', function(fields, files) {
         var zacasnaPot = this.openedFiles[0].path;
         var datoteka = this.openedFiles[0].name;
-        fs.copy(zacasnaPot, dataDir + datoteka, function(napaka) {  
-            if (napaka) {
-                posredujNapako404(odgovor);
-            } else {
-                posredujOsnovnoStran(odgovor);        
-            }
+        
+        fs.exists(datoteka, function(obstaja){
+            obstaja = 0;
+            fs.readdir(dataDir, function(napaka, datoteke){
+               if(napaka) {
+                   posredujNapako500(odgovor);
+               } else {
+                    for (i=0; i<datoteke.length; i++) {
+                        var dat = datoteke[i];  
+                        if (dat == datoteka)
+                        obstaja = 1;
+                    }
+                    if (obstaja) {
+                        posredujNapako409(odgovor);
+                    } else {
+                        fs.copy(zacasnaPot, dataDir + datoteka, function(napaka) {  
+                            if (napaka) {
+                                posredujNapako404(odgovor);
+                            } else {
+                                posredujOsnovnoStran(odgovor);        
+                            }
+                        });
+                    }
+                }
+            });
+           
         });
     });
 }
