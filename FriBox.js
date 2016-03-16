@@ -20,6 +20,8 @@ var streznik = http.createServer(function(zahteva, odgovor) {
        izbrisiDatoteko(odgovor, dataDir + zahteva.url.replace("/brisi", ""));
    } else if (zahteva.url.startsWith('/prenesi')) { 
        posredujStaticnoVsebino(odgovor, dataDir + zahteva.url.replace("/prenesi", ""), "application/octet-stream");
+   } else if (zahteva.url.startsWith('/poglej')) {
+       posredujStaticnoVsebino(odgovor, dataDir + zahteva.url.replace("/poglej", ""),  "");
    } else if (zahteva.url == "/nalozi") {
        naloziDatoteko(zahteva, odgovor);
    } else {
@@ -27,8 +29,30 @@ var streznik = http.createServer(function(zahteva, odgovor) {
    }
 });
 
+streznik.listen(process.env.PORT, function() {
+    console.log("Streznik se je zagnal")
+});
+
 function posredujOsnovnoStran(odgovor) {
     posredujStaticnoVsebino(odgovor, './public/fribox.html', "");
+}
+
+function posredujNapako404(odgovor) {
+    odgovor.writeHead(404, {'Content-Type': 'text/plain'});
+    odgovor.write('Napaka 404: Vira ni mogoce najti');
+    odgovor.end();
+}
+
+function posredujNapako500(odgovor) {
+    odgovor.writeHead(500, {'Content-Type': 'text/plain'});
+    odgovor.write('Napaka 500: Napaka na strezniku');
+    odgovor.end();
+}
+
+function posredujUspesnoZbrisana(odgovor) {
+    odgovor.writeHead(200, {'Content-Type': 'text/plain'});
+    odgovor.write('Datoteka izbrisana');
+    odgovor.end();
 }
 
 function posredujStaticnoVsebino(odgovor, absolutnaPotDoDatoteke, mimeType) {
@@ -36,13 +60,13 @@ function posredujStaticnoVsebino(odgovor, absolutnaPotDoDatoteke, mimeType) {
             if (datotekaObstaja) {
                 fs.readFile(absolutnaPotDoDatoteke, function(napaka, datotekaVsebina) {
                     if (napaka) {
-                        //Posreduj napako
+                        posredujNapako500(odgovor);
                     } else {
                         posredujDatoteko(odgovor, absolutnaPotDoDatoteke, datotekaVsebina, mimeType);
                     }
                 })
             } else {
-                //Posreduj napako
+                posredujNapako404(odgovor);
             }
         })
 }
@@ -61,7 +85,7 @@ function posredujSeznamDatotek(odgovor) {
     odgovor.writeHead(200, {'Content-Type': 'application/json'});
     fs.readdir(dataDir, function(napaka, datoteke) {
         if (napaka) {
-            //Posreduj napako
+            posredujNapako404(odgovor);
         } else {
             var rezultat = [];
             for (var i=0; i<datoteke.length; i++) {
@@ -88,10 +112,21 @@ function naloziDatoteko(zahteva, odgovor) {
         var datoteka = this.openedFiles[0].name;
         fs.copy(zacasnaPot, dataDir + datoteka, function(napaka) {  
             if (napaka) {
-                //Posreduj napako
+                posredujNapako404(odgovor);
             } else {
                 posredujOsnovnoStran(odgovor);        
             }
         });
+    });
+}
+
+function izbrisiDatoteko(odgovor, datoteka) {
+    fs.unlink(datoteka, function(napaka){
+        if(napaka)
+            posredujNapako404(odgovor);
+        else {
+           posredujUspesnoZbrisana(odgovor);
+        }
+            
     });
 }

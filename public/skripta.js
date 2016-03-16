@@ -25,24 +25,39 @@ window.addEventListener('load', function() {
 					var datoteka = datoteke[i];
 					
 					var velikost = datoteka.velikost;
-					var enota = "B";
+					var idx = 0;
+					var enote = ['B', 'kB', ' MB', ' GB', ' TB', 'PB', 'EB', 'ZB', 'YB'];
+					while (velikost > 1024) {
+						velikost /= 1024;
+						idx++;
+					}
+					var velikost = Math.round(velikost);
+					var enota = enote[idx];
 					
 					datotekeHTML.innerHTML += " \
 						<div class='datoteka senca rob'> \
 							<div class='naziv_datoteke'> " + datoteka.datoteka + "  (" + velikost + " " + enota + ") </div> \
 							<div class='akcije'> \
-							| <span><a href='/prenesi/" + datoteka.datoteka + "' target='_self'>Prenesi</a></span> \
-							| <span akcija='brisi' datoteka='"+ datoteka.datoteka +"'>Izbriši</span> </div> \
+								| <span><a href='/poglej/" + datoteka.datoteka + "' target='_blank'>Poglej</a></span> \
+								| <span><a href='/prenesi/" + datoteka.datoteka + "' target='_self'>Prenesi</a></span> \
+								| <span akcija='brisi' datoteka='"+ datoteka.datoteka +"'>Izbriši</span></div>  \
 					    </div>";	
 				}
 				
 				if (datoteke.length > 0) {
-					document.querySelector("span[akcija=brisi]").addEventListener("click", brisi);
+					var dats = document.querySelectorAll("span[akcija=brisi]");
+					for (i=0; i < datoteke.length; i++) {
+						dats[i].addEventListener("click", brisi);
+					}
 				}
 				ugasniCakanje();
 			}
 		};
+		xhttp.open("GET", "/datoteke", true );
+		xhttp.send();		
 	}
+	
+	pridobiSeznamDatotek();
 	
 	var brisi = function(event) {
 		prizgiCakanje();
